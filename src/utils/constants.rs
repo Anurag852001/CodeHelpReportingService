@@ -5,6 +5,7 @@ use log::{error, info};
 lazy_static!{
      pub static ref ADDRESS:String = set_address();
      pub static ref PORT:u16 = set_port();
+     pub static ref MONGO_URI:String = set_mongo_uri();
 }
 
 fn set_address() -> String {
@@ -23,4 +24,8 @@ fn set_port() -> u16 {
      env::var("PORT")
         .ok()
         .and_then(|s| s.parse().ok()).unwrap()
+}
+
+fn set_mongo_uri() -> String {
+    env::var("MONGO_URI").unwrap()
 }

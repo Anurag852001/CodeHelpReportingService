@@ -4,6 +4,7 @@ mod routes;
 mod utils;
 mod services;
 mod r#struct;
+mod mongo;
 
 use actix_web::middleware::Logger;
 use actix_web::{App, HttpServer, Responder};
