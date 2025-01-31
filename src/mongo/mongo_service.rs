@@ -1,10 +1,15 @@
-use bson::{doc};
-use mongodb::Client;
+use bson::{doc, Document};
+use mongodb::{Client, Collection};
 use mongodb::options::ClientOptions;
 
 use tokio;
 use futures::stream::TryStreamExt;
-
+use futures::StreamExt;
+use log::info;
+use crate::mongo::mongo_client;
+use crate::mongo::mongo_client::MongoClient;
+use crate::mongo::mongo_query_service::build_mongo_query_for_number_of_question_solved;
+use crate::r#enum::question_type_enum::QuestionType;
 
 pub async fn test_mongo() -> mongodb::error::Result<()> {
     println!("test_mongo");
@@ -43,4 +48,13 @@ pub async fn test_mongo() -> mongodb::error::Result<()> {
     println!("Collection ready to use!");
 
     Ok(())
+}
+
+pub async fn calculate_question_solved(uuid:String,question_type: QuestionType)-> i32 {
+    let pipeline = build_mongo_query_for_number_of_question_solved(question_type, uuid);
+    info!("{:?}", pipeline);
+    let mongo_client = MongoClient::new().await;
+    let db = mongo_client.unwrap().database("codehelp");
+    let collection:Collection<Document> = db.collection("codehelp");
+    collection.aggregate(pipeline).await.unwrap().count().await as i32
 }
