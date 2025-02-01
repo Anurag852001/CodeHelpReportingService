@@ -5,11 +5,13 @@ use mongodb::options::ClientOptions;
 use tokio;
 use futures::stream::TryStreamExt;
 use futures::StreamExt;
-use log::info;
+use log::{error, info};
+use serde::Serialize;
 use crate::mongo::mongo_client;
 use crate::mongo::mongo_client::MongoClient;
 use crate::mongo::mongo_query_service::build_mongo_query_for_number_of_question_solved;
-use crate::r#enum::question_type_enum::QuestionType;
+use crate::r#enum::Difficulty::Difficulty;
+use crate::r#struct::TrackQuestion::TrackQuestion;
 
 pub async fn test_mongo() -> mongodb::error::Result<()> {
     println!("test_mongo");
@@ -44,17 +46,29 @@ pub async fn test_mongo() -> mongodb::error::Result<()> {
     while let Some(doc) = cursor.try_next().await? {
         println!("Document: {:?}", doc);
     }
-
     println!("Collection ready to use!");
-
     Ok(())
 }
 
-pub async fn calculate_question_solved(uuid:String,question_type: QuestionType)-> i32 {
-    let pipeline = build_mongo_query_for_number_of_question_solved(question_type, uuid);
+pub async fn calculate_question_solved(uuid:String, difficulty: Difficulty) -> i32 {
+    let pipeline = build_mongo_query_for_number_of_question_solved(difficulty, uuid);
     info!("{:?}", pipeline);
     let mongo_client = MongoClient::new().await;
     let db = mongo_client.unwrap().database("codehelp");
     let collection:Collection<Document> = db.collection("codehelp");
-    collection.aggregate(pipeline).await.unwrap().count().await as i32
+    collection.aggregate(pipeline).await.unwrap().next().await.unwrap().unwrap().get("count").unwrap().as_i32().unwrap()
+}
+
+pub async fn track_question(track_question_obj:TrackQuestion) -> bool {
+    let mongo_client = MongoClient::new().await;
+    let db = mongo_client.unwrap().database("codehelp");
+    let collection:Collection<TrackQuestion> = db.collection("codehelp");
+    let result = collection.insert_one(track_question_obj).await;
+    return match result {
+        Ok(insert_result) => { true }
+        Err(err) => {
+            error!("{:?}", err);
+            false
+        }
+    }
 }

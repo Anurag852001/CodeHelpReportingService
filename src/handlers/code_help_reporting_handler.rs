@@ -1,9 +1,10 @@
-use actix_web::{get, web, HttpResponse, Responder};
-use actix_web::web::Path;
+
+use actix_web::{get, post, web, HttpResponse, Responder};
 use serde_json::json;
 use crate::services::user_details_service::get_user_details;
 use crate::mongo;
-use crate::r#enum::question_type_enum::QuestionType;
+use crate::r#enum::Difficulty::Difficulty;
+use crate::r#struct::TrackQuestion::TrackQuestion;
 
 #[get("/hello/{name}")]
 pub async fn greet(name: web::Path<String>) -> impl Responder {
@@ -21,7 +22,14 @@ pub async fn test(name: web::Path<String>) -> impl Responder {
 
 #[get("/questions_solved/{uuid}/{question_type}")]
 pub async fn question_solved_type_solved(path:web::Path<(String,String)>) -> impl Responder {
-    let (uuid, question_type) = path.into_inner();
-    let solved_question =   mongo::mongo_service::calculate_question_solved(uuid.to_string(),QuestionType::from_str(&question_type.to_string())).await;
-    HttpResponse::Ok().json(json!({"solved": solved_question, "uuid": uuid, "question_type": question_type}))
+    let (uuid, difficulty) = path.into_inner();
+    let solved_question =   mongo::mongo_service::calculate_question_solved(uuid.to_string(),Difficulty::from_str(&difficulty.to_string())).await;
+    HttpResponse::Ok().json(json!({"solved": solved_question, "uuid": uuid, "question_type": difficulty}))
+}
+
+
+#[post("/track/question")]
+pub async fn track_question(payload: web::Json<TrackQuestion>) -> impl Responder {
+    let success = mongo::mongo_service::track_question(payload.into_inner()).await;
+    HttpResponse::Ok().json(json!({"success": success}))
 }

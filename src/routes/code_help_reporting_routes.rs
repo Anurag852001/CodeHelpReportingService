@@ -7,5 +7,6 @@ pub fn config(config: &mut web::ServiceConfig) {
             .service(code_help_reporting_handler::greet)
             .service(code_help_reporting_handler::test)
             .service(code_help_reporting_handler::question_solved_type_solved)
+            .service(code_help_reporting_handler::track_question)
         );
 }
