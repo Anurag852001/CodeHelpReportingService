@@ -10,6 +10,7 @@ use serde::Serialize;
 use crate::mongo::mongo_client;
 use crate::mongo::mongo_client::MongoClient;
 use crate::mongo::mongo_query_service::build_mongo_query_for_number_of_question_solved;
+use crate::r#enum::CachingEnums::{get_cache, CachingEnums};
 use crate::r#enum::Difficulty::Difficulty;
 use crate::r#struct::TrackQuestion::TrackQuestion;
 
@@ -51,12 +52,19 @@ pub async fn test_mongo() -> mongodb::error::Result<()> {
 }
 
 pub async fn calculate_question_solved(uuid:String, difficulty: Difficulty) -> i32 {
+    let cache_key = uuid.clone()+"_";
+    let cache = get_cache(CachingEnums::FiveMins);
+    if(cache.contains_key(&cache_key)){
+        return cache.get(&cache_key).await.unwrap().parse().unwrap();
+    }
     let pipeline = build_mongo_query_for_number_of_question_solved(difficulty, uuid);
     info!("{:?}", pipeline);
     let mongo_client = MongoClient::new().await;
     let db = mongo_client.unwrap().database("codehelp");
     let collection:Collection<Document> = db.collection("codehelp");
-    collection.aggregate(pipeline).await.unwrap().next().await.unwrap().unwrap().get("count").unwrap().as_i32().unwrap()
+    let result =  collection.aggregate(pipeline).await.unwrap().next().await.unwrap().unwrap().get("count").unwrap().as_i32().unwrap();
+    cache.insert(cache_key, result.to_string()).await;
+    result
 }
 
 pub async fn track_question(track_question_obj:TrackQuestion) -> bool {

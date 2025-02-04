@@ -11,8 +11,7 @@ use actix_web::middleware::Logger;
 use actix_web::{App, HttpServer, Responder};
 
 
-
-    #[actix_web::main] // or #[tokio::main]
+#[actix_web::main] // or #[tokio::main]
     async fn main() -> std::io::Result<()> {
         let port = utils::constants::PORT.clone();
         let address = utils::constants::ADDRESS.clone();
