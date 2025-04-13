@@ -5,6 +5,7 @@ use crate::services::user_details_service::get_user_details;
 use crate::mongo;
 use crate::r#enum::Difficulty::Difficulty;
 use crate::r#struct::TrackQuestion::TrackQuestion;
+use crate::services::reporting_service;
 
 #[get("/hello/{name}")]
 pub async fn greet(name: web::Path<String>) -> impl Responder {
@@ -30,6 +31,6 @@ pub async fn question_solved_type_solved(path:web::Path<(String,String)>) -> imp
 
 #[post("/track/question")]
 pub async fn track_question(payload: web::Json<TrackQuestion>) -> impl Responder {
-    let success = mongo::mongo_service::track_question(payload.into_inner()).await;
+    let success = reporting_service::track_que(payload.into_inner()).await;
     HttpResponse::Ok().json(json!({"success": success}))
 }

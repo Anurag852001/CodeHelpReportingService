@@ -67,16 +67,3 @@ pub async fn calculate_question_solved(uuid:String, difficulty: Difficulty) -> i
     result
 }
 
-pub async fn track_question(track_question_obj:TrackQuestion) -> bool {
-    let mongo_client = MongoClient::new().await;
-    let db = mongo_client.unwrap().database("codehelp");
-    let collection:Collection<TrackQuestion> = db.collection("codehelp");
-    let result = collection.insert_one(track_question_obj).await;
-    return match result {
-        Ok(insert_result) => { true }
-        Err(err) => {
-            error!("{:?}", err);
-            false
-        }
-    }
-}
