@@ -26,7 +26,6 @@ pub async fn track_question(mut question_receiver: Receiver<TrackQuestion>) {
     };
     let database = client.database("codehelp");
     let collection = database.collection::<TrackQuestion>("codehelp");
- 474364
     while let Some(question) = question_receiver.recv().await {
         let retry = 3;
         let mut attempt = 0;
