@@ -12,7 +12,7 @@ use crate::mongo::mongo_client::MongoClient;
 use crate::mongo::mongo_query_service::build_mongo_query_for_number_of_question_solved;
 use crate::r#enum::CachingEnums::{get_cache, CachingEnums};
 use crate::r#enum::Difficulty::Difficulty;
-use crate::r#struct::TrackQuestion::TrackQuestion;
+use crate::models::TrackQuestion::TrackQuestion;
 
 pub async fn test_mongo() -> mongodb::error::Result<()> {
     println!("test_mongo");

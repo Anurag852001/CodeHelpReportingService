@@ -2,7 +2,7 @@ use log::error;
 use mongodb::Collection;
 use tokio::sync::mpsc::error::SendError;
 use crate::handlers::code_help_reporting_handler::track_question;
-use crate::r#struct::TrackQuestion::TrackQuestion;
+use crate::models::TrackQuestion::TrackQuestion;
 use crate::services::tracker_service::QUESTION_TRACKER;
 
 pub async fn track_que(track_question_obj:TrackQuestion)->bool {

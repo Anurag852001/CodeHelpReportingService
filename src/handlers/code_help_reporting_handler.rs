@@ -4,7 +4,7 @@ use serde_json::json;
 use crate::services::user_details_service::get_user_details;
 use crate::mongo;
 use crate::r#enum::Difficulty::Difficulty;
-use crate::r#struct::TrackQuestion::TrackQuestion;
+use crate::models::TrackQuestion::TrackQuestion;
 use crate::services::reporting_service;
 
 #[get("/hello/{name}")]

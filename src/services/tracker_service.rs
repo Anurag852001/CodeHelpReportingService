@@ -1,5 +1,5 @@
 use log::info;
-use crate::r#struct::TrackQuestion::TrackQuestion;
+use crate::models::TrackQuestion::TrackQuestion;
 use once_cell::sync::OnceCell; // ✅ this one is thread-safe
 
 use tokio::sync::mpsc::{channel, Sender, Receiver};

@@ -3,7 +3,7 @@ mod middlewares;
 mod routes;
 mod utils;
 mod services;
-mod r#struct;
+mod models;
 mod mongo;
 mod r#enum;
 

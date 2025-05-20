@@ -1,4 +1,4 @@
-use crate::r#struct::UserDetails::UserDetails;
+use crate::models::UserDetails::UserDetails;
 
 pub fn get_user_details() ->UserDetails{
     UserDetails {
