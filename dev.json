@@ -1,0 +1,9 @@
+{
+  "emailTemplates": {
+    "OTP_TEMPLATE": {
+      "from": "codeSprint@no-reply.com",
+      "subject": "Hi, Please use the otp below to login",
+      "message": "Otp : %s"
+    }
+  }
+}

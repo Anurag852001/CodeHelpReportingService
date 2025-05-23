@@ -7,7 +7,7 @@ pub struct LoginDetails {
     pub(crate) message: String,
 }
 
-impl crate::models::UserDetails::UserDetails {
+impl crate::models::LoginDetails::LoginDetails {
     pub fn new(token:String, success:bool, message:String) -> LoginDetails {
        LoginDetails{token,success,message}
     }
