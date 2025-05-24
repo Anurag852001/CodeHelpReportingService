@@ -6,6 +6,7 @@ lazy_static!{
      pub static ref ADDRESS:String = set_address();
      pub static ref PORT:u16 = set_port();
      pub static ref MONGO_URI:String = set_mongo_uri();
+     pub static ref MYSQL_URI :String = set_sql_uri();
 }
 
 fn set_address() -> String {
@@ -29,3 +30,4 @@ fn set_port() -> u16 {
 fn set_mongo_uri() -> String {
     env::var("MONGO_URI").unwrap()
 }
+fn set_sql_uri() -> String {env::var("MYSQL_URI").unwrap()}

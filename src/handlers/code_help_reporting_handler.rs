@@ -5,7 +5,11 @@ use crate::services::user_details_service::get_user_details;
 use crate::mongo;
 use crate::r#enum::Difficulty::Difficulty;
 use crate::models::TrackQuestion::TrackQuestion;
-use crate::services::reporting_service;
+use crate::models::UserDetails::UserDetails;
+use crate::services::{reporting_service, user_service};
+
+use crate::services::traits::LoginServiceTrait::LoginServiceTrait;
+use crate::services::user_service::UserLoginService;
 
 #[get("/hello/{name}")]
 pub async fn greet(name: web::Path<String>) -> impl Responder {
@@ -33,4 +37,20 @@ pub async fn question_solved_type_solved(path:web::Path<(String,String)>) -> imp
 pub async fn track_question(payload: web::Json<TrackQuestion>) -> impl Responder {
     let success = reporting_service::track_que(payload.into_inner()).await;
     HttpResponse::Ok().json(json!({"success": success}))
+}
+
+#[post("/login")]
+pub async fn login(payload: web::Json<UserDetails>) -> impl Responder {
+    let user_details:UserDetails = payload.into_inner();
+    let result = UserLoginService::login(user_details);
+
+    match result {
+        Ok(user) => {
+            HttpResponse::Ok().json(user)
+        }
+        Err(error) => {
+            HttpResponse::Ok().json(json!({"success": false, "error": error.to_string()}))
+        }
+    }
+
 }

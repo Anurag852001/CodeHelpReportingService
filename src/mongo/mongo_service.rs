@@ -4,7 +4,7 @@ use mongodb::options::ClientOptions;
 
 use tokio;
 use futures::stream::TryStreamExt;
-use futures::StreamExt;
+
 use log::{error, info};
 use serde::Serialize;
 use crate::mongo::mongo_client;
@@ -51,19 +51,45 @@ pub async fn test_mongo() -> mongodb::error::Result<()> {
     Ok(())
 }
 
-pub async fn calculate_question_solved(uuid:String, difficulty: Difficulty) -> i32 {
-    let cache_key = uuid.clone()+"_";
+use futures::stream::StreamExt;
+
+pub async fn calculate_question_solved(uuid: String, difficulty: Difficulty) -> Result<i32, String> {
+    let cache_key = format!("{}_{:?}", uuid, difficulty);
     let cache = get_cache(CachingEnums::FiveMins);
-    if(cache.contains_key(&cache_key)){
-        return cache.get(&cache_key).await.unwrap().parse().unwrap();
+
+    if let Some(result) = cache.get(&cache_key).await {
+        return Ok(result.parse().unwrap_or(0));
     }
-    let pipeline = build_mongo_query_for_number_of_question_solved(difficulty, uuid);
+
+    let pipeline = build_mongo_query_for_number_of_question_solved(difficulty, uuid.clone());
     info!("{:?}", pipeline);
-    let mongo_client = MongoClient::new().await;
-    let db = mongo_client.unwrap().database("codehelp");
-    let collection:Collection<Document> = db.collection("codehelp");
-    let result =  collection.aggregate(pipeline).await.unwrap().next().await.unwrap().unwrap().get("count").unwrap().as_i32().unwrap();
-    cache.insert(cache_key, result.to_string()).await;
-    result
+
+    let mongo_client = MongoClient::new()
+        .await
+        .map_err(|_| "Mongo connection failed".to_string())?;
+    let db = mongo_client.database("codehelp");
+    let collection: Collection<Document> = db.collection("codehelp");
+
+    let mut cursor = collection
+        .aggregate(pipeline)
+        .await
+        .map_err(|_| "Error while executing aggregation".to_string())?;
+
+    if let Some(doc_result) = cursor.next().await {
+        match doc_result {
+            Ok(doc) => {
+                let count = doc.get_i32("count").unwrap_or(0);
+                cache.insert(cache_key, count.to_string()).await;
+                Ok(count)
+            }
+            Err(_) => Err("Error parsing aggregation result".to_string()),
+        }
+    } else {
+        // No documents returned from aggregation
+        cache.insert(cache_key, "0".to_string()).await;
+        Ok(0)
+    }
 }
+
+
 
