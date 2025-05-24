@@ -1,12 +1,9 @@
+
+use crate::dao::user_login_dao::get_user_details_from_db;
 use crate::models::UserDetails::UserDetails;
-use crate::r#enum::LoginType::LoginType;
 
-pub fn get_user_details() ->UserDetails{
-    UserDetails {
-        email: "johndoe@example.com".to_string(),
-        password:"123".to_string(),
 
-        otp_enabled_login: false,
-        login_type: LoginType::USER,
-    }
+pub fn get_user_details(login_id:&str) -> Result<UserDetails,bool>{
+    let pool;
+    return get_user_details_from_db(pool,login_id)
 }

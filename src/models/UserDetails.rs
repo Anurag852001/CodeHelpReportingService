@@ -4,14 +4,14 @@ use crate::r#enum::LoginType::LoginType;
 #[derive(Serialize)]
 #[derive(Deserialize)]
 pub struct UserDetails {
-    pub(crate) email: String,
-    pub(crate) password: String,
-    pub(crate) otp_enabled_login: bool,
-    pub(crate) login_type: LoginType,
+    pub(crate) login_id: Option<String>,
+    pub(crate) password: Option<String>,
+    pub(crate) otp_enabled_login: Option<bool>,
+    pub(crate) login_type: Option<LoginType>,
 }
 
 impl UserDetails {
-    pub fn new(email: String, password: String, otp_enabled_login: bool, login_type: LoginType) -> UserDetails {
-        UserDetails { email, password,  otp_enabled_login, login_type }
+    pub fn new(login_id: Option<String>, password: Option<String>, otp_enabled_login: Option<bool>, login_type: Option<LoginType>) -> UserDetails {
+        UserDetails { login_id, password,  otp_enabled_login, login_type }
     }
 }

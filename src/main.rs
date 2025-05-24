@@ -6,6 +6,7 @@ mod services;
 mod models;
 mod mongo;
 mod r#enum;
+mod dao;
 
 use actix_cors::Cors;
 use actix_web::middleware::Logger;
