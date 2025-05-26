@@ -1,6 +1,12 @@
-
+use std::future::Future;
+use std::result;
 use actix_web::{get, post, web, HttpResponse, Responder};
+use actix_web::dev::JsonBody;
+use actix_web::web::service;
 use serde_json::json;
+use sqlx::MySqlPool;
+use crate::models::LoginDetails::LoginDetails;
+use crate::models::OtpRequest::OtpRequest;
 use crate::services::user_details_service::get_user_details;
 use crate::mongo;
 use crate::r#enum::Difficulty::Difficulty;
@@ -20,9 +26,9 @@ pub async fn greet(name: web::Path<String>) -> impl Responder {
 }
 
 #[get("/test/{name}")]
-pub async fn test(name: web::Path<String>) -> impl Responder {
-    let user_details = get_user_details();
-    HttpResponse::Ok().json(user_details)
+pub async fn test(sqlPool:web::Data<MySqlPool>,name: web::Path<String>) -> impl Responder {
+    let user_details = get_user_details(sqlPool,"".parse().unwrap());
+    HttpResponse::Ok().json(user_details.await)
 }
 
 #[get("/questions_solved/{uuid}/{question_type}")]
@@ -40,11 +46,11 @@ pub async fn track_question(payload: web::Json<TrackQuestion>) -> impl Responder
 }
 
 #[post("/login")]
-pub async fn login(payload: web::Json<UserDetails>) -> impl Responder {
+pub async fn login(sqlPool:web::Data<MySqlPool>,payload: web::Json<UserDetails>) -> impl Responder {
     let user_details:UserDetails = payload.into_inner();
-    let result = UserLoginService::login(user_details);
+    let result = UserLoginService::login(sqlPool,user_details);
 
-    match result {
+    match result.await {
         Ok(user) => {
             HttpResponse::Ok().json(user)
         }
@@ -53,4 +59,18 @@ pub async fn login(payload: web::Json<UserDetails>) -> impl Responder {
         }
     }
 
+}
+
+#[post("/verify/otp")]
+pub async fn verify_otp(sqlPool:web::Data<MySqlPool>,json_body: String) -> impl Responder {
+    let otp_request:OtpRequest = serde_json::from_str(&json_body).unwrap();
+    let result = UserLoginService::verify_otp(sqlPool, otp_request.otp, otp_request.session_token).await;
+    match result {
+        Ok(login_details)=>{
+            HttpResponse::Ok().json(login_details)
+        }
+        Err(error)=>{
+            HttpResponse::Ok().json(json!({"success":false,"error":error}))
+        }
+    }
 }
