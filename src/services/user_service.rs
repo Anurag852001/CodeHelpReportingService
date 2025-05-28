@@ -1,5 +1,6 @@
 use std::sync::Arc;
 use actix_web::web;
+use actix_web::web::get;
 use log::{error, info};
 use rand::distr::Alphanumeric;
 use rand::Rng;
@@ -16,6 +17,16 @@ pub const LOGIN_TOKEN: &str = "LOGIN_TOKEN";
 impl LoginServiceTrait for UserLoginService {
 
     async fn login(sqlPool:web::Data<MySqlPool>,user_details: UserDetails) -> Result<LoginDetails, String> {
+        info!("Received login request :{:?}", user_details);
+        if let Some(value) = get_cache(CachingEnums::TwoHours).get(&user_details.login_id.clone().unwrap()).await  {
+            return Ok(LoginDetails::new(None,false,"Already Logged in".to_string()));
+        }
+       if let Some(value) =  get_cache(CachingEnums::OneMinute).get(&user_details.login_id.clone().unwrap()).await  {
+            return Ok(LoginDetails::new(None,false,"Wait some time before trying again".to_string()));
+        }
+
+        //inserting into one minute cache
+        get_cache(CachingEnums::OneMinute).insert(user_details.login_id.clone().unwrap(), "true".to_string()).await;
         if user_details.otp_enabled_login.unwrap() {
             let session_token = generate_token();
             sendUserOtp(session_token.clone(),&user_details).await;
@@ -36,6 +47,7 @@ impl LoginServiceTrait for UserLoginService {
         }
         let generated_token= generate_token();
         get_cache(CachingEnums::TwoHours).insert(generated_token.clone(), "true".parse().unwrap()).await;
+        get_cache(CachingEnums::TwoHours).insert(user_details.login_id.unwrap(),generated_token.clone()).await;
         Ok(LoginDetails::new(Some(generated_token), true, "successfully login".to_string()))
     }
 
@@ -64,8 +76,6 @@ impl LoginServiceTrait for UserLoginService {
         Err("Invalid OTP".to_string())
     }
 }
-
-
 
 fn generate_token() -> String {
     rand::thread_rng().sample_iter(&Alphanumeric).take(20).map(char::from).collect::<String>()

@@ -74,3 +74,11 @@ pub async fn verify_otp(sqlPool:web::Data<MySqlPool>,json_body: String) -> impl 
         }
     }
 }
+
+#[post("check/token")]
+pub async fn check_token(token:String) -> impl Responder {
+       match UserLoginService::check_token(token).await {
+           Ok(_) => {HttpResponse::Ok().json(json!({"success": true,"message":"Already logged in."}))}
+           Err(_) => {HttpResponse::Ok().json(json!({"success": false, "message": "Token expired or invalid"}))}
+       }
+}

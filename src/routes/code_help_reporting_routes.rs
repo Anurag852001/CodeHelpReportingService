@@ -9,5 +9,6 @@ pub fn config(config: &mut web::ServiceConfig) {
             .service(code_help_reporting_handler::track_question)
             .service(code_help_reporting_handler::login)
             .service(code_help_reporting_handler::verify_otp)
+            .service(code_help_reporting_handler::check_token)
         );
 }
