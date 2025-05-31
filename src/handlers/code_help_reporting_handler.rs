@@ -1,12 +1,13 @@
 use std::future::Future;
 use std::result;
-use actix_web::{get, post, web, HttpResponse, Responder};
+use actix_web::{get, options, post, web, HttpResponse, Responder};
 use actix_web::dev::JsonBody;
 use actix_web::web::service;
 use serde_json::json;
 use sqlx::MySqlPool;
 use crate::models::LoginDetails::LoginDetails;
 use crate::models::OtpRequest::OtpRequest;
+use crate::models::TokenRequest::TokenRequest;
 use crate::services::user_details_service::get_user_details;
 use crate::mongo;
 use crate::r#enum::Difficulty::Difficulty;
@@ -75,9 +76,15 @@ pub async fn verify_otp(sqlPool:web::Data<MySqlPool>,json_body: String) -> impl 
     }
 }
 
+#[options("/{_:.*}")]
+pub async fn options() -> impl Responder {
+    HttpResponse::Ok()
+}
+
+
 #[post("check/token")]
-pub async fn check_token(token:String) -> impl Responder {
-       match UserLoginService::check_token(token).await {
+pub async fn check_token(token_request:web::Json<TokenRequest>) -> impl Responder {
+       match UserLoginService::check_token(token_request.into_inner()).await {
            Ok(_) => {HttpResponse::Ok().json(json!({"success": true,"message":"Already logged in."}))}
            Err(_) => {HttpResponse::Ok().json(json!({"success": false, "message": "Token expired or invalid"}))}
        }

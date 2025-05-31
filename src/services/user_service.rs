@@ -7,6 +7,7 @@ use rand::Rng;
 use sqlx::MySqlPool;
 use crate::dao::user_login_dao::save_user_details;
 use crate::models::LoginDetails::LoginDetails;
+use crate::models::TokenRequest::TokenRequest;
 use crate::models::UserDetails::UserDetails;
 use crate::r#enum::CachingEnums::{get_cache, CachingEnums};
 use crate::services::traits::LoginServiceTrait::LoginServiceTrait;
@@ -19,7 +20,7 @@ impl LoginServiceTrait for UserLoginService {
     async fn login(sqlPool:web::Data<MySqlPool>,user_details: UserDetails) -> Result<LoginDetails, String> {
         info!("Received login request :{:?}", user_details);
         if let Some(value) = get_cache(CachingEnums::TwoHours).get(&user_details.login_id.clone().unwrap()).await  {
-            return Ok(LoginDetails::new(None,false,"Already Logged in".to_string()));
+            return Ok(LoginDetails::new(Option::from(value),true,"Already Logged in".to_string()));
         }
        if let Some(value) =  get_cache(CachingEnums::OneMinute).get(&user_details.login_id.clone().unwrap()).await  {
             return Ok(LoginDetails::new(None,false,"Wait some time before trying again".to_string()));
@@ -46,16 +47,21 @@ impl LoginServiceTrait for UserLoginService {
             };
         }
         let generated_token= generate_token();
-        get_cache(CachingEnums::TwoHours).insert(generated_token.clone(), "true".parse().unwrap()).await;
+        get_cache(CachingEnums::TwoHours).insert(generated_token.clone(), serde_json::to_string(&user_details).unwrap()).await;
         get_cache(CachingEnums::TwoHours).insert(user_details.login_id.unwrap(),generated_token.clone()).await;
         Ok(LoginDetails::new(Some(generated_token), true, "successfully login".to_string()))
     }
 
-     async fn check_token(token: String) -> Result<bool, String> {
-        if let Some(cachedData) = get_cache(CachingEnums::TwoHours).get(&(token + LOGIN_TOKEN).to_string()).await {
+     async fn check_token(token_request: TokenRequest) -> Result<bool, String> {
+         info!("Received check token :{:?}", token_request);
+         let cached_data = get_cache(CachingEnums::TwoHours).get(&token_request.token).await;
+         info!("Caching data: {:?}", cached_data);
+         if(cached_data.clone() != None) {
+            info!("{:?}",cached_data);
             Ok(true)
         } else {
-           Ok(false)
+            info!("No token found");
+           Err("No token found".to_string())
        }
     }
     async fn verify_otp(sql_pool:web::Data<MySqlPool>, otp: String, session_token:String) -> Result<LoginDetails, String> {
